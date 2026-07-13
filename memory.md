@@ -1,4 +1,4 @@
-# Contexto de Sesión — AutoStock (Jul 12 2026)
+# Contexto de Sesión — AutoStock (Jul 13 2026)
 
 ## Stack
 - Next.js 16.2.6, React 19.2.4, Tailwind CSS v4, Supabase (RLS disabled), lucide-react icons
@@ -97,5 +97,45 @@
 ## Environment
 - Windows 11, PowerShell 5.1
 - Supabase CLI linked to project
-- `npm run build` → OK (18 routes, 2 API routes)
 - `npm run dev` con Turbopack (Node.js 22 LTS required, NOT Node 24)
+
+## Usuarios
+- **admin@autostock.com** — creado via Supabase Auth Dashboard, rol cambiado a `admin` manualmente
+- Los usuarios nuevos se crean desde el panel de Supabase (no hay registro público)
+
+## Último Build — Jul 12 2026
+```
+> autostock@0.1.0 build> next build
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.9s
+✓ Finished TypeScript in 6.4s
+✓ Collecting page data using 5 workers in 831ms
+✓ Generating static pages using 5 workers (18/18) in 953ms
+✓ Finalizing page optimization in 13ms
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/reports
+├ ƒ /api/users
+├ ○ /categories
+├ ○ /dashboard
+├ ○ /import
+├ ○ /indicators
+├ ○ /inventory
+├ ○ /locations
+├ ○ /login
+├ ○ /manufacturers
+├ ○ /movements
+├ ○ /purchase-orders
+├ ○ /sale-orders
+├ ○ /users
+└ ○ /vehicles
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
