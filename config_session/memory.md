@@ -167,6 +167,14 @@
 
 **Decisión:** posponer hasta después de probar la expiración de licencia mañana (Jul 27 2026). No se modifica código ni BD hoy. Se reevaluará tras verificar el flujo de expiración → activación en producción.
 
+## Port a MedStock — Pendiente (Jul 26 2026)
+- Se exploró el proyecto MedStock en `C:\Users\zcoder\Documents\CYCSWeb\GitHub\0-Vercel\MedStock` (task `ses_05f6d2cc6ffe...`).
+- Stack idéntico: Next.js 16.2.6, React 19.2.4, Supabase, Tailwind v4, lucide-react.
+- Roles en MedStock: `admin`, `gerente`, `invitado` (el rol `admin` existe, mismo que usa el sistema de licencias).
+- Proxy, clients, AuthProvider, paleta, fuentes → todo compatible sin cambios.
+- **Documento de port**: `docs/port-licencias-medstock.md` — plan detallado, 12 archivos (8 nuevos, 3 modificados, 1 SQL), orden de implementación en 6 fases.
+- **Decisión**: posponer implementación hasta después de probar expiración mañana.
+
 ## Checkpoint
 - `141e835` — AutoStock MVP completo — 17 fases implementadas
 - `0d16ed96` — historial reescrito (filter-branch)
