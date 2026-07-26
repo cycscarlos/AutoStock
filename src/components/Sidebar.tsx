@@ -19,6 +19,7 @@ import {
   MapPin,
   ShoppingCart,
   ClipboardList,
+  Shield,
   type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const navItems: NavItem[] = [
   { name: "Importar Datos", href: "/import", icon: Upload, roles: ["admin"] },
   { name: "Indicadores", href: "/indicators", icon: BarChart3, roles: ["admin", "vendedor", "comprador"] },
   { name: "Usuarios", href: "/users", icon: Users, roles: ["admin"] },
+  { name: "Licencias", href: "/admin/licenses", icon: Shield, roles: ["admin"] },
 ];
 
 interface SidebarProps {

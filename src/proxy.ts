@@ -15,7 +15,7 @@ export async function proxy(request: NextRequest) {
   const isLoginPage = pathname === "/login" || pathname.startsWith("/login/");
   const isLicenseRoute = pathname.startsWith("/license") || pathname.startsWith("/api/license/");
 
-  if (!licenseDisabled && !(isDev && !forceLicense) && !isLicenseRoute && !isLoginPage) {
+  if (!licenseDisabled && !(isDev && !forceLicense) && !isLicenseRoute && !isLoginPage && !pathname.startsWith("/api/admin/")) {
     try {
       const adminClient = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -40,11 +40,8 @@ export async function proxy(request: NextRequest) {
       const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
       if (daysLeft <= 0) {
-        console.log("License guard: license expired, redirecting");
         return NextResponse.redirect(new URL("/license?expired=1", request.url));
       }
-
-      console.log("License guard: OK, days left:", daysLeft);
     } catch (err) {
       console.error("License guard error:", err);
     }
@@ -117,6 +114,7 @@ export async function proxy(request: NextRequest) {
       "/import": ["admin"],
       "/categories": ["admin"],
       "/locations": ["admin"],
+      "/admin/licenses": ["admin"],
       "/vehicles": ["admin", "comprador"],
       "/manufacturers": ["admin", "comprador"],
       "/purchase-orders": ["admin", "comprador"],

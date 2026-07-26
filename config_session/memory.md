@@ -49,7 +49,7 @@
 - `aut_sale_items` — id, order_id FK, part_id FK, quantity, unit_price
 - `aut_licenses` — id, license_key (UNIQUE), activated_at, expires_at, is_active, created_at
 
-## Pages (16 routes + 2 API routes)
+## Pages (17 routes + 3 API routes + 1 proxy)
 
 | Route | File | Description |
 |-------|------|-------------|
@@ -71,23 +71,42 @@
 | `/api/reports` | `api/reports/route.ts` | POST email reports (SMTP_PASS pending) |
 | `/license` | `license/page.tsx` | License activation form |
 | `/api/license/activate` | `api/license/activate/route.ts` | POST activate license |
+| `/admin/licenses` | `admin/licenses/page.tsx` | Admin license mgmt: edit dates, generate new key |
+| `/api/admin/licenses/generate` | `api/admin/licenses/generate/route.ts` | POST generate license key |
 
 ## Shared Components
 - `ui/BarChart.tsx` — needs `loaded` prop
 - `ui/ConfirmModal.tsx` — variant (danger/info), confirmLabel, loading
 - `ui/EmptyState.tsx` — title, description, optional action
 - `ui/Skeleton.tsx` — variant (table/card/list), rows, cols
+- `LicenseBanner.tsx` — banner ámbar cuando licencia ≤30 días, dismissible
 
 ## License System (SaaS)
-- Tabla `aut_licenses` en Supabase (creada via SQL Editor)
-- Clave formato `XXXX-XXXX-XXXX-XXXX`: 6 chars YYMMDD + 10 chars HMAC-SHA256
-- `src/lib/license.ts`: `verifyLicenseKey()`, `extractExpiry()`
-- `scripts/generate-license.ts`: CLI generador (`--test` o `--expires YYYY-MM-DD`)
-- `src/app/license/page.tsx`: formulario de activación con auto-formateo
-- `src/app/api/license/activate/route.ts`: POST endpoint, inserta licencia con 30 días de vigencia
-- `src/proxy.ts`: license guard consulta `aut_licenses` activa en cada request; redirige a `/license` si no hay o expiró. Se salta para `/license`, `/api/license/` y `/login`.
-- En desarrollo: `LICENSE_DISABLED=true` lo desactiva; `FORCE_LICENSE=true` lo fuerza incluso en dev.
-- `LICENSE_SECRET` compartido entre `.env.local` y el generador CLI.
+- **Origen**: adaptado del proyecto Posadas (HMAC signing, activation form, CLI, 30-day flow, admin panel)
+- **Tabla** `aut_licenses` en Supabase — SQL en `scripts/create-aut_licenses.sql`
+- **Formato clave**: `XXXX-XXXX-XXXX-XXXX` — 6 chars YYMMDD + 10 chars HMAC-SHA256 truncado
+- `src/lib/license.ts`: `verifyLicenseKey()` con `crypto.createHmac`, `extractExpiry()` parsea YYMMDD
+- `scripts/generate-license.ts`: CLI con `--test` (30 días) o `--expires YYYY-MM-DD`
+- `src/app/license/page.tsx`: formulario de activación con auto-formateo (4 grupos), mensajes de error/éxito
+- `src/app/api/license/activate/route.ts`: POST endpoint, desactiva licencia anterior, inserta nueva con 30 días
+- `src/proxy.ts`: license guard consulta `aut_licenses` activa en cada request; redirige a `/license` si no hay o expiró. **Exclusiones**: `/license`, `/api/license/`, `/api/admin/`, `/login`
+- **Dev**: `LICENSE_DISABLED=true` desactiva todas las chequeos; `FORCE_LICENSE=true` fuerza incluso en dev
+- `LICENSE_SECRET` compartido entre `.env.local` y el CLI
+
+### T7a/T7b — LicenseBanner (`src/components/LicenseBanner.tsx`)
+- Banner ámbar en dashboard layout cuando faltan ≤30 días para expirar
+- Consulta `aut_licenses` activa, calcula días restantes
+- Dismissible vía `localStorage` (no vuelve a aparecer por 24h)
+- Se integra en `src/app/(dashboard)/layout.tsx`
+
+### T8 — Admin License Management (`src/app/(dashboard)/admin/licenses/page.tsx`)
+- Muestra licencia activa actual con fechas editables (`<input type="date">`)
+- Formulario para editar `activated_at` y `expires_at` con guardado vía Supabase directo
+- Sección separada "Nueva licencia generada (para próxima sesión)" con estilo ámbar
+- Botón "Generar Nueva Licencia" que llama a la API de generación
+- Copia al portapapeles con botón `<Copy>`
+- **API** `src/app/api/admin/licenses/generate/route.ts`: genera clave HMAC desde `expires_at`, elimina duplicado previo, inserta como **inactiva** (`is_active: false`) — no desactiva la licencia actual
+- **Sidebar**: entrada `"/admin/licenses"` con ícono `Shield`, rol `admin`
 
 ## Critical APIs & Patterns
 - `@supabase/ssr` uses getAll()/setAll() cookie API
@@ -132,7 +151,8 @@
 - `de90001` — checkpoint: antes de implementar sistema de licencias (Fase 1)
 - `cc1bca0` — checkpoint: antes de implementar T6 License Guard
 - `d9e24f2` — checkpoint: T1-T6 sistema de licencias completado (Fase 1 y 2)
-- `HEAD` — T7a/T7b: LicenseBanner en dashboard layout
+- `03556f4` — checkpoint: antes de implementar T8 panel admin licencias
+- `HEAD` — `063360a` — checkpoint: T8 panel admin licencias + fix licencia inactiva para próxima sesión
 
 ## Environment
 - Windows 11, PowerShell 5.1
