@@ -152,7 +152,8 @@
 - `cc1bca0` — checkpoint: antes de implementar T6 License Guard
 - `d9e24f2` — checkpoint: T1-T6 sistema de licencias completado (Fase 1 y 2)
 - `03556f4` — checkpoint: antes de implementar T8 panel admin licencias
-- `HEAD` — `93dd337` — checkpoint: T8 panel admin licencias + fix licencia inactiva para próxima sesión
+- `93dd337` — checkpoint: T8 panel admin licencias + fix licencia inactiva para próxima sesión
+- `HEAD` — `a079273` — docs: actualizar memory.md con hashes reales
 
 ## Environment
 - Windows 11, PowerShell 5.1
