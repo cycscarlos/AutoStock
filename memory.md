@@ -1,9 +1,10 @@
-# Contexto de Sesión — AutoStock (Jul 13 2026)
+# Contexto de Sesión — AutoStock (Jul 25 2026)
 
 ## Stack
 - Next.js 16.2.6, React 19.2.4, Tailwind CSS v4, Supabase (RLS disabled), lucide-react icons
 - No auth — RLS disabled on all tables, direct client-side Supabase queries
 - Node.js v22.23.1 LTS (Turbopack)
+- `@faker-js/faker` (devDependency) — generación de datos de prueba
 
 ## Branding
 - Fraunces/DM Sans/JetBrains Mono fonts, primary blue #0a5c8a
@@ -85,6 +86,26 @@
 - Soft delete for parts: `is_active = false`
 - tsconfig: noUnusedLocals=false, noUnusedParameters=false
 
+## Seed Data (`scripts/seed.ts`) — Jul 25 2026
+- Genera datos realistas con `@faker-js/faker` (instalado como devDependency)
+- Respeta FK constraints: crea usuarios via `supabase.auth.admin.createUser()` para que existan en `auth.users`
+- Se ejecuta con: `npx tsx scripts/seed.ts`
+- **Tablas pobladas**:
+
+| Tabla | Registros |
+|---|---|
+| `profiles` | 5 (1 admin + 4 usuarios funcionales) |
+| `aut_manufacturers` | 20 (Bosch, Denso, Delphi, etc.) |
+| `aut_suppliers` | 10 distribuidores argentinos |
+| `aut_categories` | 12 (Frenos, Motor, etc.) |
+| `aut_locations` | 24 (4 pasillos × 3 racks × 2 estantes) |
+| `aut_vehicles` | 79 (Toyota, VW, Ford, etc.) |
+| `aut_parts` | ~137 repuestos |
+| `aut_part_vehicles` | ~326 compatibilidades |
+| `aut_movements` | ~339 (entrada/salida/ajuste) |
+| `aut_purchase_orders` | 25 con ~89 items |
+| `aut_sale_orders` | 35 con ~96 items |
+
 ## Known Issues
 - SMTP_PASS empty in `.env.local` — email reports return 501
 - `autostock.web@gmail.com` needs app password setup
@@ -93,6 +114,8 @@
 
 ## Checkpoint
 - `141e835` — AutoStock MVP completo — 17 fases implementadas
+- `0d16ed96` — historial reescrito (filter-branch) para remover `docs/Supabase-credentials/` y `supabase/.temp/`
+- `HEAD` — seed data generado: `scripts/seed.ts` con `@faker-js/faker`, ~1080 registros en 13 tablas
 
 ## Environment
 - Windows 11, PowerShell 5.1
@@ -101,7 +124,17 @@
 
 ## Usuarios
 - **admin@autostock.com** — creado via Supabase Auth Dashboard, rol cambiado a `admin` manualmente
-- Los usuarios nuevos se crean desde el panel de Supabase (no hay registro público)
+- Los siguientes fueron creados por `scripts/seed.ts` con contraseña `AutoStock2026!`:
+  - **vendedor1@autostock.com** — vendedor
+  - **vendedor2@autostock.com** — vendedor
+  - **comprador1@autostock.com** — comprador
+  - **comprador2@autostock.com** — comprador
+
+## Deploy
+- **GitHub:** https://github.com/cycscarlos/AutoStock
+- **Vercel:** https://auto-stock-nine.vercel.app/
+- Variables de entorno configuradas en Vercel (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
+- `.gitignore` incluye: `.env*`, `Supabase-credentials/`, `supabase/.temp/`, `.vercel`
 
 ## Último Build — Jul 12 2026
 ```
