@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import AutoStockChat from "@/components/AutoStockChat";
+import LicenseBanner from "@/components/LicenseBanner";
 import { Menu } from "lucide-react";
 
 export default function DashboardLayout({
@@ -32,6 +33,7 @@ export default function DashboardLayout({
           </button>
         </header>
 
+        <LicenseBanner />
         <main className="flex-1 p-4 md:p-8">
           {children}
         </main>

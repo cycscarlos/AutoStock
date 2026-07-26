@@ -131,7 +131,8 @@
 - `0d16ed96` — historial reescrito (filter-branch)
 - `de90001` — checkpoint: antes de implementar sistema de licencias (Fase 1)
 - `cc1bca0` — checkpoint: antes de implementar T6 License Guard
-- `HEAD` — T1-T6 implementados: tabla `aut_licenses`, generador CLI, verifyLicenseKey, página `/license`, API activate, license guard en proxy.ts
+- `d9e24f2` — checkpoint: T1-T6 sistema de licencias completado (Fase 1 y 2)
+- `HEAD` — T7a/T7b: LicenseBanner en dashboard layout
 
 ## Environment
 - Windows 11, PowerShell 5.1
