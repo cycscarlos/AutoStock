@@ -1,4 +1,4 @@
-# Contexto de Sesión — AutoStock (Jul 25 2026)
+# Contexto de Sesión — AutoStock (Jul 26 2026)
 
 ## Stack
 - Next.js 16.2.6, React 19.2.4, Tailwind CSS v4, Supabase (RLS disabled), lucide-react icons
@@ -33,7 +33,7 @@
 - Cards: `bg-white rounded-xl shadow-sm border border-slate-100`
 - Buttons: `bg-blue-600 hover:bg-blue-700 text-white` for accent actions
 
-## Database Schema (13 tables)
+## Database Schema (14 tables)
 - `profiles` — id, email, role (user_role enum), created_at, updated_at
 - `aut_manufacturers` — id, name, contact, phone, email, notes
 - `aut_suppliers` — id, name, contact_person, phone, email, address
@@ -47,6 +47,7 @@
 - `aut_purchase_items` — id, order_id FK, part_id FK, quantity_ordered, quantity_received, unit_price
 - `aut_sale_orders` — id, order_number UNIQUE, customer_name, customer_phone, customer_email, status (pendiente/confirmada/despachada/entregada/cancelada), type (directa/reserva), notes, created_by FK
 - `aut_sale_items` — id, order_id FK, part_id FK, quantity, unit_price
+- `aut_licenses` — id, license_key (UNIQUE), activated_at, expires_at, is_active, created_at
 
 ## Pages (16 routes + 2 API routes)
 
@@ -68,12 +69,25 @@
 | `/users` | `users/page.tsx` | User list, role change modal via API |
 | `/api/users` | `api/users/route.ts` | PATCH role (admin only) |
 | `/api/reports` | `api/reports/route.ts` | POST email reports (SMTP_PASS pending) |
+| `/license` | `license/page.tsx` | License activation form |
+| `/api/license/activate` | `api/license/activate/route.ts` | POST activate license |
 
 ## Shared Components
 - `ui/BarChart.tsx` — needs `loaded` prop
 - `ui/ConfirmModal.tsx` — variant (danger/info), confirmLabel, loading
 - `ui/EmptyState.tsx` — title, description, optional action
 - `ui/Skeleton.tsx` — variant (table/card/list), rows, cols
+
+## License System (SaaS)
+- Tabla `aut_licenses` en Supabase (creada via SQL Editor)
+- Clave formato `XXXX-XXXX-XXXX-XXXX`: 6 chars YYMMDD + 10 chars HMAC-SHA256
+- `src/lib/license.ts`: `verifyLicenseKey()`, `extractExpiry()`
+- `scripts/generate-license.ts`: CLI generador (`--test` o `--expires YYYY-MM-DD`)
+- `src/app/license/page.tsx`: formulario de activación con auto-formateo
+- `src/app/api/license/activate/route.ts`: POST endpoint, inserta licencia con 30 días de vigencia
+- `src/proxy.ts`: license guard consulta `aut_licenses` activa en cada request; redirige a `/license` si no hay o expiró. Se salta para `/license`, `/api/license/` y `/login`.
+- En desarrollo: `LICENSE_DISABLED=true` lo desactiva; `FORCE_LICENSE=true` lo fuerza incluso en dev.
+- `LICENSE_SECRET` compartido entre `.env.local` y el generador CLI.
 
 ## Critical APIs & Patterns
 - `@supabase/ssr` uses getAll()/setAll() cookie API
@@ -114,8 +128,10 @@
 
 ## Checkpoint
 - `141e835` — AutoStock MVP completo — 17 fases implementadas
-- `0d16ed96` — historial reescrito (filter-branch) para remover `docs/Supabase-credentials/` y `supabase/.temp/`
-- `HEAD` — seed data generado: `scripts/seed.ts` con `@faker-js/faker`, ~1080 registros en 13 tablas
+- `0d16ed96` — historial reescrito (filter-branch)
+- `de90001` — checkpoint: antes de implementar sistema de licencias (Fase 1)
+- `cc1bca0` — checkpoint: antes de implementar T6 License Guard
+- `HEAD` — T1-T6 implementados: tabla `aut_licenses`, generador CLI, verifyLicenseKey, página `/license`, API activate, license guard en proxy.ts
 
 ## Environment
 - Windows 11, PowerShell 5.1

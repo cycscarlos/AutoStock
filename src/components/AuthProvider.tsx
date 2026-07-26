@@ -73,16 +73,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = "/login";
   };
 
-  if (loading && typeof window !== "undefined") {
-    const path = window.location.pathname;
-    if (path !== "/login" && path !== "/license") {
-      return (
-        <div className="flex flex-col items-center justify-center h-screen gap-4 bg-slate-50">
-          <Loader2 className="animate-spin text-blue-600" size={40} />
-          <p className="text-sm text-slate-500 font-medium">Verificando sesion...</p>
-        </div>
-      );
-    }
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-4 bg-slate-50">
+        <Loader2 className="animate-spin text-blue-600" size={40} />
+        <p className="text-sm text-slate-500 font-medium">Verificando sesion...</p>
+      </div>
+    );
   }
 
   return (
