@@ -4,6 +4,23 @@
 **Auditoría**: Exploración completa de MedStock completada (task `ses_05f6d2cc6ffe...`)
 **Estado**: Pendiente de implementación (postergado hasta verificar expiración en producción de AutoStock)
 
+## Contenido de esta carpeta
+
+| Archivo | Descripción |
+|---------|-------------|
+| `port-licencias-medstock.md` | Este plan |
+| `create-aut_licenses.sql` | SQL para crear la tabla en Supabase |
+| `license.ts` | `src/lib/license.ts` — funciones verifyLicenseKey y extractExpiry |
+| `generate-license.ts` | `scripts/generate-license.ts` — CLI generador de claves |
+| `license-page.tsx` | `src/app/license/page.tsx` — formulario de activación |
+| `activate-route.ts` | `src/app/api/license/activate/route.ts` — endpoint de activación |
+| `admin-licenses-page.tsx` | `src/app/(dashboard)/admin/licenses/page.tsx` — panel admin |
+| `admin-generate-route.ts` | `src/app/api/admin/licenses/generate/route.ts` — endpoint generar |
+| `LicenseBanner.tsx` | `src/components/LicenseBanner.tsx` — banner de días restantes |
+| `proxy-reference.ts` | `src/proxy.ts` de AutoStock (referencia del license guard) |
+
+Los archivos `.ts`/`.tsx` son copias textuales del código fuente de AutoStock. Copiar a las rutas indicadas y ajustar según las notas de cada tarea.
+
 ---
 
 ## 1. Proyecto Explorado
@@ -85,24 +102,11 @@ El license guard en `proxy.ts` es el punto más sensible. Si falla, bloquea toda
 | **Esfuerzo** | Bajo (~15 líneas) |
 | **Dependencias** | — |
 
-**Contenido**: Ídem AutoStock. Crear tabla `aut_licenses` con columnas `id`, `license_key`, `activated_at`, `expires_at`, `is_active`, `created_at`.
+**Archivo SQL**: `create-aut_licenses.sql` (en esta carpeta).
 
 **Ejecutar en**: Supabase SQL Editor del proyecto MedStock (`rrngvryilxnzffciioao`).
 
-```sql
-CREATE TABLE IF NOT EXISTS aut_licenses (
-  id BIGSERIAL PRIMARY KEY,
-  license_key VARCHAR(19) NOT NULL UNIQUE,
-  activated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  expires_at DATE NOT NULL,
-  is_active BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_aut_licenses_active ON aut_licenses(is_active, expires_at);
-```
-
-**Acción**: Copiar y ejecutar en SQL Editor de Supabase.
+**Acción**: Abrir el archivo `.sql`, copiar y ejecutar en SQL Editor.
 
 ---
 
@@ -136,13 +140,9 @@ También agregar en Vercel (production) la misma variable.
 | **Esfuerzo** | Bajo (~40 líneas) |
 | **Dependencias** | M2 |
 
-**Contenido**: Copia exacta de `src/lib/license.ts` de AutoStock.
+**Archivo**: `license.ts` (en esta carpeta). Copiar a `src/lib/license.ts`.
 
-Funciones:
-- `verifyLicenseKey(key: string, secret: string): boolean`
-- `extractExpiry(key: string): Date | null`
-
-Sin cambios necesarios. El módulo es puramente funcional, sin imports del proyecto.
+Sin cambios necesarios. Módulo puramente funcional, sin imports del proyecto.
 
 ---
 
@@ -155,11 +155,9 @@ Sin cambios necesarios. El módulo es puramente funcional, sin imports del proye
 | **Esfuerzo** | Bajo (~70 líneas) |
 | **Dependencias** | M2 |
 
-**Contenido**: Copia exacta de `scripts/generate-license.ts` de AutoStock.
+**Archivo**: `generate-license.ts` (en esta carpeta). Copiar a `scripts/generate-license.ts`.
 
-Sin cambios. Script independiente, solo Node.js y crypto.
-
-**Crear directorio** `scripts/` si no existe.
+Sin cambios. Script independiente, solo Node.js y crypto. Crear directorio `scripts/` si no existe.
 
 ---
 
@@ -172,12 +170,9 @@ Sin cambios. Script independiente, solo Node.js y crypto.
 | **Esfuerzo** | Medio (~100 líneas) |
 | **Dependencias** | M1, M3 |
 
-**Contenido**: Copia de `src/app/license/page.tsx` de AutoStock con estos ajustes:
+**Archivo**: `license-page.tsx` (en esta carpeta). Copiar a `src/app/license/page.tsx`.
 
-- **Import de Supabase**: Cambiar de `@/lib/supabase` (ya existe igual en MedStock) → **sin cambios**.
-- **Remove LicenciaBanner**: AutoStock lo importa, MedStock no lo tiene todavía. Si se incluye, crear en T7.
-- **Estilos**: La paleta es idéntica (`bg-white text-slate-900`, etc.) → **sin cambios**.
-- **Mensajes**: Cambiar referencias a "AutoStock" por "MedStock" en textos si los hay.
+**Único cambio requerido**: en el badge del logo, cambiar `<span>AS</span>` por `<span>MS</span>` (línea 83 del archivo, marcado con comentario `CAMBIAR`).
 
 ---
 
@@ -190,14 +185,9 @@ Sin cambios. Script independiente, solo Node.js y crypto.
 | **Esfuerzo** | Bajo-Medio (~50 líneas) |
 | **Dependencias** | M1, M3, M2 |
 
-**Contenido**: Copia exacta de AutoStock.
+**Archivo**: `activate-route.ts` (en esta carpeta). Copiar a `src/app/api/license/activate/route.ts`.
 
-Verificar:
-- `supabaseAdmin` importado desde `@/lib/supabase-admin` → existe en MedStock.
-- `createClient` desde `@/lib/supabase-server` → existe en MedStock.
-- Tabla `aut_licenses` → creada en M1.
-
-**Sin cambios necesarios**.
+Sin cambios necesarios. Verificar que `supabaseAdmin` y `createClient` existen en sus respectivos paths (sí, existen en MedStock).
 
 ---
 
@@ -210,68 +200,15 @@ Verificar:
 | **Esfuerzo** | Medio (~40 líneas) |
 | **Dependencias** | M1, M3, M5a |
 
-**Descripción**: Insertar el license guard antes del bloque de auth, igual que en AutoStock.
+**Archivo de referencia**: `proxy-reference.ts` (en esta carpeta). Muestra el license guard completo ya implementado en AutoStock.
 
-**Pasos exactos:**
+**Pasos exactos sobre `src/proxy.ts` de MedStock:**
 
-1. Después de `const { pathname } = request.nextUrl;`, agregar:
+1. Después de la línea `const { pathname } = request.nextUrl;`, copiar el bloque `LICENSE GUARD` desde `proxy-reference.ts`.
+2. En el bloque de auth `if (!user && !isLoginPage)`, agregar `&& !isLicenseRoute` para que usuarios no autenticados puedan acceder a `/license`.
+3. Agregar `"/admin/licenses": ["admin"]` al mapa `access` para control de roles.
 
-```typescript
-const isProduction = process.env.NODE_ENV === "production";
-const isLicenseRoute = pathname.startsWith("/license") || pathname.startsWith("/api/license/");
-
-if (isProduction) {
-  if (pathname.startsWith("/admin/licenses") || pathname.startsWith("/api/admin/")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-  if (!isLicenseRoute && pathname !== "/login") {
-    // license guard: consultar aut_licenses activa
-    try {
-      const adminClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-        process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      );
-      const { data: licencias } = await adminClient
-        .from("aut_licenses")
-        .select("expires_at")
-        .eq("is_active", true)
-        .order("id", { ascending: false })
-        .limit(1);
-      if (!licencias || licencias.length === 0) {
-        return NextResponse.redirect(new URL("/license", request.url));
-      }
-      const expiresAt = new Date(licencias[0].expires_at);
-      if (expiresAt <= new Date()) {
-        return NextResponse.redirect(new URL("/license?expired=1", request.url));
-      }
-    } catch (err) {
-      console.error("License guard error:", err);
-    }
-  }
-}
-```
-
-2. En el bloque de feature flags existente agregar `/license`:
-
-```typescript
-const featureFlags: Record<string, string> = {
-  // ... existentes ...
-  "/license": "FEATURE_LICENSE",
-};
-```
-
-(Opcional, solo para mantener consistencia)
-
-3. En el bloque de auth (`if (!user && !isLoginPage)`), agregar `&& !isLicenseRoute`:
-
-```typescript
-if (!user && !isLoginPage && !isLicenseRoute) {
-```
-
-Esto permite que usuarios no autenticados accedan a `/license`.
-
-**Verificación**: Misma lógica que AutoStock, ya probada en producción de AutoStock.
+**Verificación**: Misma lógica que AutoStock, ya probada en producción.
 
 ---
 
@@ -284,7 +221,9 @@ Esto permite que usuarios no autenticados accedan a `/license`.
 | **Esfuerzo** | Bajo (~25 líneas) |
 | **Dependencias** | M1 |
 
-**Contenido**: Copia exacta de AutoStock, adaptar colores al sidebar oscuro si es necesario.
+**Archivo**: `LicenseBanner.tsx` (en esta carpeta). Copiar a `src/components/LicenseBanner.tsx`.
+
+Sin cambios necesarios. Los colores del banner (ámbar) son independientes del sidebar.
 
 ---
 
@@ -297,30 +236,34 @@ Esto permite que usuarios no autenticados accedan a `/license`.
 | **Esfuerzo** | Medio (~200 líneas) |
 | **Dependencias** | M1, M3 |
 
-**Contenido**: Copia exacta de AutoStock.
+**Archivos**:
+- `admin-licenses-page.tsx` (en esta carpeta) → `src/app/(dashboard)/admin/licenses/page.tsx`
+- `admin-generate-route.ts` (en esta carpeta) → `src/app/api/admin/licenses/generate/route.ts`
 
-- Agregar ruta en `proxy.ts` access map: `"/admin/licenses": ["admin"]`
-- Agregar en Sidebar: link "Licencias" solo en dev.
-- API route `src/app/api/admin/licenses/generate/route.ts` (nuevo, copia exacta).
+Sin cambios necesarios.
+
+**Además**:
+- Agregar `"/admin/licenses": ["admin"]` al mapa `access` en `proxy.ts`.
+- En `Sidebar.tsx`, agregar link "Licencias" solo en dev (mismo patrón que AutoStock: `...(process.env.NODE_ENV === "development" ? [{...}] : [])`).
 
 ---
 
 ## 4. Resumen de Archivos
 
-| # | Archivo | Acción | Copia exacta |
-|---|---------|--------|-------------|
-| M1 | `scripts/create-aut_licenses.sql` | Crear | ✅ Sí |
-| M2 | `.env.local` | Modificar | Agregar LICENSE_SECRET |
-| M3 | `src/lib/license.ts` | Crear | ✅ Sí |
-| M4 | `scripts/generate-license.ts` | Crear | ✅ Sí |
-| M5a | `src/app/license/page.tsx` | Crear | ✅ Sí (casi) |
-| M5b | `src/app/api/license/activate/route.ts` | Crear | ✅ Sí |
-| M6 | `src/proxy.ts` | Modificar | Adaptar (misma lógica) |
-| M7 | `src/components/LicenseBanner.tsx` | Crear | ✅ Sí |
-| M8a | `src/app/(dashboard)/admin/licenses/page.tsx` | Crear | ✅ Sí |
-| M8b | `src/app/api/admin/licenses/generate/route.ts` | Crear | ✅ Sí |
-| M8c | `src/components/Sidebar.tsx` | Modificar | Agregar link |
-| — | `src/app/(dashboard)/layout.tsx` | Modificar | Agregar LicenseBanner |
+| # | Archivo destino | Acción | Archivo en carpeta |
+|---|-----------------|--------|-------------------|
+| M1 | (SQL Editor) | Crear tabla | `create-aut_licenses.sql` |
+| M2 | `.env.local` | Modificar | — (agregar LICENSE_SECRET) |
+| M3 | `src/lib/license.ts` | Crear | `license.ts` |
+| M4 | `scripts/generate-license.ts` | Crear | `generate-license.ts` |
+| M5a | `src/app/license/page.tsx` | Crear | `license-page.tsx` (ajustar badge MS) |
+| M5b | `src/app/api/license/activate/route.ts` | Crear | `activate-route.ts` |
+| M6 | `src/proxy.ts` | Modificar | `proxy-reference.ts` (referencia) |
+| M7 | `src/components/LicenseBanner.tsx` | Crear | `LicenseBanner.tsx` |
+| M8a | `src/app/(dashboard)/admin/licenses/page.tsx` | Crear | `admin-licenses-page.tsx` |
+| M8b | `src/app/api/admin/licenses/generate/route.ts` | Crear | `admin-generate-route.ts` |
+| M8c | `src/components/Sidebar.tsx` | Modificar | — (agregar link) |
+| — | `src/app/(dashboard)/layout.tsx` | Modificar | — (agregar LicenseBanner) |
 
 Total: **12 archivos** (8 nuevos, 3 modificados, 1 SQL).
 

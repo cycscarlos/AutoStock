@@ -172,7 +172,7 @@
 - Stack idéntico: Next.js 16.2.6, React 19.2.4, Supabase, Tailwind v4, lucide-react.
 - Roles en MedStock: `admin`, `gerente`, `invitado` (el rol `admin` existe, mismo que usa el sistema de licencias).
 - Proxy, clients, AuthProvider, paleta, fuentes → todo compatible sin cambios.
-- **Documento de port**: `docs/port-licencias-medstock.md` — plan detallado, 12 archivos (8 nuevos, 3 modificados, 1 SQL), orden de implementación en 6 fases.
+- **Documento de port**: `docs/MedStock-license/port-licencias-medstock.md` — plan detallado + 9 archivos fuente de respaldo (código listo para copiar).
 - **Decisión**: posponer implementación hasta después de probar expiración mañana.
 
 ## Checkpoint
