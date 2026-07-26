@@ -150,6 +150,23 @@
 - Bot engine is rule-based (no OpenAI integration), responds to: stock bajo, total, movimientos, órdenes, proveedores, vehículos
 - Export CSV uses UTF-8 BOM for Excel compatibility
 
+## RLS en `aut_licenses` — Pendiente (Jul 26 2026)
+- Hoy RLS desactivado en todas las tablas, excepto `aut_licenses` que también está desactivado (consistente con el resto).
+- Se detectó que `aut_licenses` no tiene RLS habilitado, a diferencia del resto de las tablas que sí lo tienen activado con políticas públicas `USING (true)`.
+
+**Análisis de impacto al activar RLS:**
+- Proxy y API routes (`/api/license/activate`, `/api/admin/licenses/generate`) usan `supabaseAdmin` con `service_role` → **no se ven afectados**.
+- Cliente del navegador (anon key) consulta `aut_licenses` en: admin page (lectura/escritura), LicenseBanner (lectura), `/license` (inserción).
+
+**Dos opciones consideradas:**
+
+| Opción | Política | Efecto |
+|---|---|---|
+| A (pública) | `FOR ALL USING (true) WITH CHECK (true)` | Sin cambios de comportamiento. Igual a RLS desactivado. |
+| B (solo lectura) | `FOR SELECT USING (true)` + solo service_role escribe | La admin page no podría editar fechas ni insertar desde el browser. Habría que migrar escrituras a API routes. |
+
+**Decisión:** posponer hasta después de probar la expiración de licencia mañana (Jul 27 2026). No se modifica código ni BD hoy. Se reevaluará tras verificar el flujo de expiración → activación en producción.
+
 ## Checkpoint
 - `141e835` — AutoStock MVP completo — 17 fases implementadas
 - `0d16ed96` — historial reescrito (filter-branch)
