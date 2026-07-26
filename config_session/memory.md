@@ -160,7 +160,8 @@
 - `93dd337` — checkpoint: T8 panel admin licencias + fix licencia inactiva para próxima sesión
 - `a079273` — docs: actualizar memory.md con hashes reales
 - `baef686` — docs: memory.md — actualizar checkpoint hashes reales
-- `HEAD` — checkpoint: license guard solo en producción + /admin/licenses bloqueado en producción (3 capas) + fixes seed.ts
+- `37af550` — checkpoint: license guard solo en producción + /admin/licenses bloqueado en producción (3 capas) + fixes seed.ts
+- `HEAD` — checkpoint: license guard solo en producción + /admin/licenses bloqueado (3 capas) + fixes seed.ts + docs
 
 ## Environment
 - Windows 11, PowerShell 5.1
