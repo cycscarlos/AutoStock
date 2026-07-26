@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import * as XLSX from "xlsx";
 import { Upload, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Home, Download, X } from "lucide-react";
 import Link from "next/link";
 
@@ -44,8 +43,9 @@ export default function ImportPage() {
     setResult(null);
 
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
+        const XLSX = await import("xlsx");
         const data = new Uint8Array(ev.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -103,7 +103,8 @@ export default function ImportPage() {
     if (success > 0) setRows([]);
   }
 
-  function downloadTemplate() {
+  async function downloadTemplate() {
+    const XLSX = await import("xlsx");
     const headers = ["Código", "OEM", "Descripción", "Stock", "Stock Mín", "Stock Máx", "Unidad", "Lote", "Caducidad", "Notas", "Código Barras", "Peso (kg)", "Largo (cm)", "Ancho (cm)", "Alto (cm)"];
     const ws = XLSX.utils.aoa_to_sheet([headers, ["Ejemplo-001", "12345-ABC", "Batería 12V 60Ah", "10", "5", "50", "Unidad", "LOTE-001", "2027-12-31", "Nota opcional", "123456789012", "1.5", "20", "15", "10"]]);
     const wb = XLSX.utils.book_new();
