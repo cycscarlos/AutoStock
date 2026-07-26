@@ -27,6 +27,9 @@ function generateKey(expiresAt: Date) {
 }
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "No disponible en producción" }, { status: 404 });
+  }
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

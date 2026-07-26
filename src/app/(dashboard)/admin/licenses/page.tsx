@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
+import { notFound } from "next/navigation";
 import { Shield, KeyRound, Calendar, Clock, CheckCircle, AlertCircle, Loader2, Copy } from "lucide-react";
 
 function toDateInputValue(date: Date): string {
@@ -10,6 +11,7 @@ function toDateInputValue(date: Date): string {
 }
 
 export default function AdminLicensesPage() {
+  if (process.env.NODE_ENV === "production") { notFound(); }
   const { user, role } = useAuth();
   const [licencia, setLicencia] = useState<{
     license_key: string;

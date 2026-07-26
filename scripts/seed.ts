@@ -447,10 +447,10 @@ async function main() {
       const partNumber = `${catTemplate.prefix}-${String(partCounter).padStart(5, "0")}`;
       partCounter++;
 
-      const replacements: Record<string, string> = {
-        brand: () => faker.helpers.arrayElement(partBrands),
-        model: () => faker.helpers.arrayElement(vehicle.model),
-        material: () => faker.helpers.arrayElement(["cerámica", "semimetálica", "orgánica", "metálica"]),
+      const replacements: Record<string, () => string> = {
+        brand: () => brand,
+        model: () => vehicle.model,
+        material: () => faker.helpers.arrayElement(["caucho", "silicón", "acero", "aluminio"]),
         type: () => faker.helpers.arrayElement(["estándar", "premium", "económico", "reforzado", "ventilado"]),
         diam: () => String(faker.helpers.arrayElement([256, 280, 300, 320, 340, 355])),
         amps: () => String(faker.helpers.arrayElement([70, 80, 90, 100, 120, 140])),
@@ -466,9 +466,6 @@ async function main() {
         ce: () => String(faker.helpers.arrayElement([400, 500, 600, 700, 800])),
         cap: () => String(faker.helpers.arrayElement([1.5, 2.0, 2.5, 3.0])),
         size: () => faker.helpers.arrayElement(["26+14", "28+16", "30+18"]),
-        material: () => faker.helpers.arrayElement(["caucho", "silicón", "acero", "aluminio"]),
-        brand: () => brand,
-        model: () => faker.helpers.arrayElement([vehicle.model, vehicle.model]),
       };
 
       const description = tpl.replace(/\{(\w+)\}/g, (_, key) => {

@@ -89,8 +89,8 @@
 - `scripts/generate-license.ts`: CLI con `--test` (30 días) o `--expires YYYY-MM-DD`
 - `src/app/license/page.tsx`: formulario de activación con auto-formateo (4 grupos), mensajes de error/éxito
 - `src/app/api/license/activate/route.ts`: POST endpoint, desactiva licencia anterior, inserta nueva con 30 días
-- `src/proxy.ts`: license guard consulta `aut_licenses` activa en cada request; redirige a `/license` si no hay o expiró. **Exclusiones**: `/license`, `/api/license/`, `/api/admin/`, `/login`
-- **Dev**: `LICENSE_DISABLED=true` desactiva todas las chequeos; `FORCE_LICENSE=true` fuerza incluso en dev
+- `src/proxy.ts`: license guard **solo se ejecuta en producción** (`process.env.NODE_ENV === "production"`). En desarrollo no hay ningún chequeo de licencia. En producción redirige a `/license` si no hay licencia activa o expiró. **Exclusiones**: `/license`, `/api/license/`, `/api/admin/`, `/login`
+- **Dev**: el license guard no se ejecuta. Las variables `LICENSE_DISABLED` y `FORCE_LICENSE` ya no se usan.
 - `LICENSE_SECRET` compartido entre `.env.local` y el CLI
 
 ### T7a/T7b — LicenseBanner (`src/components/LicenseBanner.tsx`)
@@ -98,6 +98,11 @@
 - Consulta `aut_licenses` activa, calcula días restantes
 - Dismissible vía `localStorage` (no vuelve a aparecer por 24h)
 - Se integra en `src/app/(dashboard)/layout.tsx`
+
+### Producción: `/admin/licenses` NUNCA accesible (3 capas de defensa)
+1. **Proxy**: en producción, si `pathname` empieza con `/admin/licenses` o `/api/admin/`, redirige a `/dashboard` antes de cualquier otra lógica.
+2. **Sidebar**: el link "Licencias" solo se incluye en el array navItems si `process.env.NODE_ENV === "development"`. En producción se tree-shakea del bundle.
+3. **Página + API**: `page.tsx` llama `notFound()` si `process.env.NODE_ENV === "production"`. La API route devuelve 404.
 
 ### T8 — Admin License Management (`src/app/(dashboard)/admin/licenses/page.tsx`)
 - Muestra licencia activa actual con fechas editables (`<input type="date">`)
@@ -153,7 +158,9 @@
 - `d9e24f2` — checkpoint: T1-T6 sistema de licencias completado (Fase 1 y 2)
 - `03556f4` — checkpoint: antes de implementar T8 panel admin licencias
 - `93dd337` — checkpoint: T8 panel admin licencias + fix licencia inactiva para próxima sesión
-- `HEAD` — `a079273` — docs: actualizar memory.md con hashes reales
+- `a079273` — docs: actualizar memory.md con hashes reales
+- `baef686` — docs: memory.md — actualizar checkpoint hashes reales
+- `HEAD` — checkpoint: license guard solo en producción + /admin/licenses bloqueado en producción (3 capas) + fixes seed.ts
 
 ## Environment
 - Windows 11, PowerShell 5.1
