@@ -233,7 +233,7 @@
 - `37af550` — checkpoint: license guard solo en producción + /admin/licenses bloqueado en producción (3 capas) + fixes seed.ts
 - `e8cf7d3` — docs: memory.md — historial de checkpoint consolidado, HEAD como keyword
 - `cc7eed1` — docs: crear carpeta MedStock-license con plan + código fuente completo para port
-- `HEAD` — `960b2a3` — docs: memory.md — protocolo de pruebas, fixes aplicados, build output actualizado
+- `HEAD` — `1c13c48` — docs: memory.md — protocolo de pruebas, fixes aplicados, build y checkpoint actualizados
 
 ## Environment
 - Windows 11, PowerShell 5.1
