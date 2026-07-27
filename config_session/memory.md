@@ -150,6 +150,11 @@
 - Bot engine is rule-based (no OpenAI integration), responds to: stock bajo, total, movimientos, órdenes, proveedores, vehículos
 - Export CSV uses UTF-8 BOM for Excel compatibility
 
+## Fixes Aplicados (Jul 26 2026)
+- **seed.ts**: corregidos 3 errores de tipo que bloqueaban el build: `Record<string, string>` → `Record<string, () => string>`, `faker.helpers.arrayElement(vehicle.model)` → `vehicle.model`, y eliminadas claves duplicadas (`material`, `brand`, `model`) en el objeto `replacements`.
+- **proxy.ts**: eliminadas variables `isDev`, `licenseDisabled`, `forceLicense` y su lógica condicional. License guard ahora depende únicamente de `process.env.NODE_ENV === "production"`.
+- **admin/generate route**: nueva licencia se inserta como `is_active: false` (no desactiva la actual). Se eliminó el paso de desactivación masiva.
+
 ## RLS en `aut_licenses` — Pendiente (Jul 26 2026)
 - Hoy RLS desactivado en todas las tablas, excepto `aut_licenses` que también está desactivado (consistente con el resto).
 - Se detectó que `aut_licenses` no tiene RLS habilitado, a diferencia del resto de las tablas que sí lo tienen activado con políticas públicas `USING (true)`.
@@ -166,6 +171,46 @@
 | B (solo lectura) | `FOR SELECT USING (true)` + solo service_role escribe | La admin page no podría editar fechas ni insertar desde el browser. Habría que migrar escrituras a API routes. |
 
 **Decisión:** posponer hasta después de probar la expiración de licencia mañana (Jul 27 2026). No se modifica código ni BD hoy. Se reevaluará tras verificar el flujo de expiración → activación en producción.
+
+## Protocolo de Pruebas — License System (Jul 26 2026)
+
+### 1. License guard desactivado en dev
+| Paso | Acción | Resultado |
+|------|--------|-----------|
+| 1.1 | Ir a `/dashboard` sin licencia activa | Carga normal, sin redirect a `/license` |
+| 1.2 | Con licencia activa, ir a `/dashboard` | Dashboard carga sin banner ni bloqueo |
+
+### 2. `/admin/licenses` accesible en dev (admin)
+| Paso | Acción | Resultado |
+|------|--------|-----------|
+| 2.1 | Login como admin | Sidebar muestra "Licencias" |
+| 2.2 | Ir a `/admin/licenses` | Página carga con licencia activa + formulario |
+| 2.3 | Generar nueva licencia | Aparece sección ámbar con nueva clave |
+| 2.4 | Refrescar página | Sigue la licencia original (nueva está inactiva) |
+
+### 3. Bloqueo en producción (simular forzando `isProduction = true` en proxy.ts)
+| Paso | Acción | Resultado |
+|------|--------|-----------|
+| 3.1 | Visitar `/admin/licenses` | Redirect a `/dashboard` |
+| 3.2 | POST a `/api/admin/licenses/generate` | 404 `{"error":"No disponible en producción"}` |
+
+### 4. Sidebar oculto en producción
+| Paso | Acción | Resultado |
+|------|--------|-----------|
+| 4.1 | `npm run build && npm start` | Build exitoso |
+| 4.2 | Sidebar como admin | "Licencias" no aparece |
+
+### 5. Rol admin requerido en dev
+| Paso | Acción | Resultado |
+|------|--------|-----------|
+| 5.1 | Login como vendedor/comprador | Sidebar sin "Licencias" |
+| 5.2 | Ir a `/admin/licenses` | Redirect a `/dashboard` |
+
+### 6. Regresión — rutas públicas
+| Paso | Acción | Resultado |
+|------|--------|-----------|
+| 6.1 | Ir a `/login` | Carga sin bloqueo de licencia |
+| 6.2 | Ir a `/license` sin login | Carga normal (ruta excluida) |
 
 ## Port a MedStock — Pendiente (Jul 26 2026)
 - Se exploró el proyecto MedStock en `C:\Users\zcoder\Documents\CYCSWeb\GitHub\0-Vercel\MedStock` (task `ses_05f6d2cc6ffe...`).
@@ -186,7 +231,9 @@
 - `a079273` — docs: actualizar memory.md con hashes reales
 - `baef686` — docs: memory.md — actualizar checkpoint hashes reales
 - `37af550` — checkpoint: license guard solo en producción + /admin/licenses bloqueado en producción (3 capas) + fixes seed.ts
-- `HEAD` — checkpoint: license guard solo en producción + /admin/licenses bloqueado (3 capas) + fixes seed.ts + docs
+- `e8cf7d3` — docs: memory.md — historial de checkpoint consolidado, HEAD como keyword
+- `cc7eed1` — docs: crear carpeta MedStock-license con plan + código fuente completo para port
+- `HEAD` — `960b2a3` — docs: memory.md — protocolo de pruebas, fixes aplicados, build output actualizado
 
 ## Environment
 - Windows 11, PowerShell 5.1
@@ -207,21 +254,28 @@
 - Variables de entorno configuradas en Vercel (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
 - `.gitignore` incluye: `.env*`, `Supabase-credentials/`, `supabase/.temp/`, `.vercel`
 
-## Último Build — Jul 12 2026
+## Último Build — Jul 26 2026
 ```
-> autostock@0.1.0 build> next build
+> autostock@0.1.0 build
+> next build
+
 ▲ Next.js 16.2.6 (Turbopack)
 - Environments: .env.local
+
   Creating an optimized production build ...
-✓ Compiled successfully in 4.9s
-✓ Finished TypeScript in 6.4s
-✓ Collecting page data using 5 workers in 831ms
-✓ Generating static pages using 5 workers (18/18) in 953ms
-✓ Finalizing page optimization in 13ms
+✓ Compiled successfully in 5.5s
+  Running TypeScript ...
+  Finished TypeScript in 7.7s ...
+  Collecting page data using 5 workers ...
+  Generating static pages using 5 workers (22/22) in 995ms
+  Finalizing page optimization ...
 
 Route (app)
 ┌ ○ /
 ├ ○ /_not-found
+├ ○ /admin/licenses
+├ ƒ /api/admin/licenses/generate
+├ ƒ /api/license/activate
 ├ ƒ /api/reports
 ├ ƒ /api/users
 ├ ○ /categories
@@ -229,6 +283,7 @@ Route (app)
 ├ ○ /import
 ├ ○ /indicators
 ├ ○ /inventory
+├ ○ /license
 ├ ○ /locations
 ├ ○ /login
 ├ ○ /manufacturers
