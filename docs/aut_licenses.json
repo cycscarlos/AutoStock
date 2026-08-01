@@ -1,0 +1,23 @@
+[
+  {
+    "id": 13,
+    "license_key": "2608-2584-EB96-4D56",
+    "expires_at": "2026-08-25",
+    "is_active": false,
+    "dias_restantes": 24
+  },
+  {
+    "id": 15,
+    "license_key": "2608-0204-1796-6478",
+    "expires_at": "2026-08-02",
+    "is_active": false,
+    "dias_restantes": 1
+  },
+  {
+    "id": 14,
+    "license_key": "2607-274A-BAC4-C0CC",
+    "expires_at": "2026-07-27",
+    "is_active": true,
+    "dias_restantes": -5
+  }
+]
