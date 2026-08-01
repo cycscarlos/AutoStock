@@ -29,17 +29,17 @@ export async function POST(request: NextRequest) {
 
     const { error: insertError } = await supabaseAdmin
       .from("aut_licenses")
-      .insert({
-        license_key,
-        activated_at: new Date().toISOString(),
-        expires_at: expiresAt.toISOString().split("T")[0],
-        is_active: true,
-      });
+      .upsert(
+        {
+          license_key,
+          activated_at: new Date().toISOString(),
+          expires_at: expiresAt.toISOString().split("T")[0],
+          is_active: true,
+        },
+        { onConflict: "license_key" }
+      );
 
     if (insertError) {
-      if (insertError.code === "23505") {
-        return NextResponse.json({ error: "Esta clave ya fue activada anteriormente" }, { status: 409 });
-      }
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
