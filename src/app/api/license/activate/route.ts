@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { verifyLicenseKey } from "@/lib/license";
+import { verifyLicenseKey, extractExpiry } from "@/lib/license";
 
 const LICENSE_SECRET = process.env.LICENSE_SECRET || "dev_license_secret_insecure";
 
@@ -24,8 +24,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: deactivateError.message }, { status: 500 });
     }
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 30);
+    const expiresAt = extractExpiry(license_key) ?? (() => {
+      const fallback = new Date();
+      fallback.setDate(fallback.getDate() + 30);
+      return fallback;
+    })();
 
     const { error: insertError } = await supabaseAdmin
       .from("aut_licenses")
