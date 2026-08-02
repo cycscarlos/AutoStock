@@ -1,4 +1,4 @@
-# Contexto de Sesión — AutoStock (Jul 26 2026)
+# Contexto de Sesión — AutoStock (Aug 1 2026)
 
 ## Stack
 - Next.js 16.2.6, React 19.2.4, Tailwind CSS v4, Supabase (RLS disabled), lucide-react icons
@@ -88,7 +88,7 @@
 - `src/lib/license.ts`: `verifyLicenseKey()` con `crypto.createHmac`, `extractExpiry()` parsea YYMMDD
 - `scripts/generate-license.ts`: CLI con `--test` (30 días) o `--expires YYYY-MM-DD`
 - `src/app/license/page.tsx`: formulario de activación con auto-formateo (4 grupos), mensajes de error/éxito
-- `src/app/api/license/activate/route.ts`: POST endpoint, desactiva licencia anterior, inserta nueva con 30 días
+- `src/app/api/license/activate/route.ts`: POST endpoint, desactiva licencia anterior, activa con `expires_at` extraído de la clave (`extractExpiry`) — ver Fixes Aug 1 2026
 - `src/proxy.ts`: license guard **solo se ejecuta en producción** (`process.env.NODE_ENV === "production"`). En desarrollo no hay ningún chequeo de licencia. En producción redirige a `/license` si no hay licencia activa o expiró. **Exclusiones**: `/license`, `/api/license/`, `/api/admin/`, `/login`
 - **Dev**: el license guard no se ejecuta. Las variables `LICENSE_DISABLED` y `FORCE_LICENSE` ya no se usan.
 - `LICENSE_SECRET` compartido entre `.env.local` y el CLI
@@ -155,6 +155,37 @@
 - **proxy.ts**: eliminadas variables `isDev`, `licenseDisabled`, `forceLicense` y su lógica condicional. License guard ahora depende únicamente de `process.env.NODE_ENV === "production"`.
 - **admin/generate route**: nueva licencia se inserta como `is_active: false` (no desactiva la actual). Se eliminó el paso de desactivación masiva.
 
+## Fixes Aplicados (Aug 1 2026) — Flujo de activación de licencias en producción
+
+### Incidente 1 — "Clave de licencia inválida" en producción
+- **Causa**: `LICENSE_SECRET` NO estaba configurado en Vercel. El endpoint `/api/license/activate` usaba el fallback `"dev_license_secret_insecure"` → HMAC no coincidía con las claves generadas con el secreto real de `.env.local`.
+- **Verificación**: la clave `2608-0204-1796-6478` es VÁLIDA contra el secreto local (verificado con node + createHmac).
+- **Fix**: usuario agregó `LICENSE_SECRET` en Vercel (mismo valor que `.env.local`) + redeploy. **No requirió cambio de código.**
+
+### Incidente 2 — "Esta clave ya fue activada anteriormente" (error 23505)
+- **Causa**: el panel admin (`/api/admin/licenses/generate`) inserta la clave generada como `is_active: false` en `aut_licenses`. Luego la activación intentaba `insert` de la misma clave → violación de `UNIQUE(license_key)` → mensaje engañoso (la clave nunca se había activado).
+- **Fix** (commit `57b0906`): `src/app/api/license/activate/route.ts` — `insert` → `upsert(..., { onConflict: "license_key" })`. Eliminado el manejo especial del error 23505.
+
+### Incidente 3 — Banner decía "expira en 30 días" en vez de la fecha real
+- **Causa**: la activación siempre otorgaba `hoy + 30 días` ignorando la fecha YYMMDD embebida en la clave (el panel genera la clave DESDE la fecha de expiración elegida).
+- **Fix** (commit `8f8d0e6`): `src/app/api/license/activate/route.ts` — `expiresAt = extractExpiry(license_key) ?? fallback(now + 30)`. La expiración ahora respeta la fecha embebida en la clave.
+- **Ojo**: la licencia activada ANTES del fix (el 1 de agosto, +30 días → expira 2026-08-31) sigue vigente hasta esa fecha. El fix aplica a activaciones futuras.
+
+### Estado de la tabla `aut_licenses` (ver `docs/aut_licenses.json` — dump del 1 ago)
+| id | license_key | expires_at | is_active | dias_restantes |
+|---|---|---|---|---|
+| 13 | 2608-2584-EB96-4D56 | 2026-08-25 | false | 24 |
+| 14 | 2607-274A-BAC4-C0CC | 2026-07-27 | false (expiró) | -5 |
+| 15 | 2608-0204-1796-6478 | 2026-08-02 | false | 1 |
+
+- **Licencia activa actual**: activada el 1 ago (post-incidente 2, pre-fix 3) → `expires_at` 2026-08-31 (30 días), no está en el dump.
+- **Pendiente de prueba**: generar clave nueva en dev (`/admin/licenses`, ej. expira 9 ago), activarla en producción y verificar que el banner diga "expira en 8 días" (no 30) y que `expires_at` quede en 2026-08-09.
+
+## Archivos nuevos (Aug 1 2026)
+- `scripts/inspect-aut_licenses.sql` — 4 bloques SQL para inspeccionar estructura + índices + data de `aut_licenses` desde el SQL Editor de Supabase.
+- `docs/aut_licenses.json` — dump de la tabla `aut_licenses` tras generar la clave.
+- `scripts/AutoStock.code-workspace` — workspace de VS Code.
+
 ## RLS en `aut_licenses` — Pendiente (Jul 26 2026)
 - Hoy RLS desactivado en todas las tablas, excepto `aut_licenses` que también está desactivado (consistente con el resto).
 - Se detectó que `aut_licenses` no tiene RLS habilitado, a diferencia del resto de las tablas que sí lo tienen activado con políticas públicas `USING (true)`.
@@ -170,7 +201,7 @@
 | A (pública) | `FOR ALL USING (true) WITH CHECK (true)` | Sin cambios de comportamiento. Igual a RLS desactivado. |
 | B (solo lectura) | `FOR SELECT USING (true)` + solo service_role escribe | La admin page no podría editar fechas ni insertar desde el browser. Habría que migrar escrituras a API routes. |
 
-**Decisión:** posponer hasta después de probar la expiración de licencia mañana (Jul 27 2026). No se modifica código ni BD hoy. Se reevaluará tras verificar el flujo de expiración → activación en producción.
+**Decisión:** posponer hasta después de probar la expiración de licencia mañana (Jul 27 2026). No se modifica código ni BD hoy. Se reevaluará tras verificar el flujo de expiración → activación en producción. **Estado (Aug 1 2026):** sigue pendiente — prioridad actual fue el flujo de activación (fixes upsert + extractExpiry).
 
 ## Protocolo de Pruebas — License System (Jul 26 2026)
 
@@ -233,7 +264,10 @@
 - `37af550` — checkpoint: license guard solo en producción + /admin/licenses bloqueado en producción (3 capas) + fixes seed.ts
 - `e8cf7d3` — docs: memory.md — historial de checkpoint consolidado, HEAD como keyword
 - `cc7eed1` — docs: crear carpeta MedStock-license con plan + código fuente completo para port
-- `HEAD` — `1c13c48` — docs: memory.md — protocolo de pruebas, fixes aplicados, build y checkpoint actualizados
+- `13ad4a5` — docs: restaurar archivos MedStock-license + memory.md HEAD 1c13c48
+- `fb018db` — checkpoint: antes de fix upsert en api/license/activate
+- `57b0906` — fix upsert en activate (subido a producción por el usuario)
+- `HEAD` — `8f8d0e6` — fix: expiración respeta la fecha embebida en la clave (extractExpiry)
 
 ## Environment
 - Windows 11, PowerShell 5.1
@@ -251,7 +285,7 @@
 ## Deploy
 - **GitHub:** https://github.com/cycscarlos/AutoStock
 - **Vercel:** https://auto-stock-nine.vercel.app/
-- Variables de entorno configuradas en Vercel (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY)
+- Variables de entorno configuradas en Vercel (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, **LICENSE_SECRET** agregado el 1 ago 2026)
 - `.gitignore` incluye: `.env*`, `Supabase-credentials/`, `supabase/.temp/`, `.vercel`
 
 ## Último Build — Jul 26 2026
