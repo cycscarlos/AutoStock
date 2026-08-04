@@ -181,6 +181,15 @@
 - **Licencia activa actual**: activada el 1 ago (post-incidente 2, pre-fix 3) → `expires_at` 2026-08-31 (30 días), no está en el dump.
 - **Pendiente de prueba**: generar clave nueva en dev (`/admin/licenses`, ej. expira 9 ago), activarla en producción y verificar que el banner diga "expira en 8 días" (no 30) y que `expires_at` quede en 2026-08-09.
 
+### Fixes Aplicados (Aug 4 2026) — Estabilización del sistema de licencias
+- **Inestabilidad de expiración y zonas horarias resuelta**:
+  - `src/proxy.ts`: fecha de expiración interpretada como UTC fin de día (`expires_at + "T23:59:59Z"`), y condición cambiada de `daysLeft <= 0` a `daysLeft < 0`. La licencia ahora es válida durante todo el último día.
+  - `src/lib/license.ts`: `extractExpiry()` ahora usa `Date.UTC(2000 + yy, mm, dd)` para evitar discrepancias de huso horario local vs servidor.
+  - `src/components/LicenseBanner.tsx` y `src/app/(dashboard)/admin/licenses/page.tsx`: actualizados para usar `expires_at + "T23:59:59Z"` al calcular días restantes.
+  - `src/app/api/admin/licenses/generate/route.ts` y `scripts/generate-license.ts`: actualizados a métodos UTC (`getUTCFullYear()`, `getUTCMonth()`, `getUTCDate()`) y parsing con `"T00:00:00Z"`.
+  - Archivos de referencia en `docs/MedStock-license/` actualizados en sincronía.
+  - **Informe de Arquitectura generado**: en `docs/license_system_analysis.md`.
+
 ## Archivos nuevos (Aug 1 2026)
 - `scripts/inspect-aut_licenses.sql` — 4 bloques SQL para inspeccionar estructura + índices + data de `aut_licenses` desde el SQL Editor de Supabase.
 - `docs/aut_licenses.json` — dump de la tabla `aut_licenses` tras generar la clave.

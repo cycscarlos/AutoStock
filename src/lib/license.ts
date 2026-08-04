@@ -25,7 +25,7 @@ export function extractExpiry(key: string): Date | null {
   const mm = parseInt(rawDate.substring(2, 4), 10) - 1;
   const dd = parseInt(rawDate.substring(4, 6), 10);
 
-  const date = new Date(2000 + yy, mm, dd);
+  const date = new Date(Date.UTC(2000 + yy, mm, dd));
   if (isNaN(date.getTime())) return null;
   return date;
 }

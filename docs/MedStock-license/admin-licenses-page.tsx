@@ -43,7 +43,8 @@ export default function AdminLicensesPage() {
     if (err) {
       setError(err.message);
     } else if (data) {
-      const diff = new Date(data.expires_at).getTime() - Date.now();
+      const expiresAt = new Date(data.expires_at + "T23:59:59Z");
+      const diff = expiresAt.getTime() - Date.now();
       const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
       setLicencia({ ...data, days_left: Math.max(0, daysLeft) });
       setActivateDate(toDateInputValue(new Date(data.activated_at)));

@@ -18,9 +18,10 @@ export default function LicenseBanner() {
       .maybeSingle()
       .then(({ data }) => {
         if (!data?.expires_at) return;
-        const diff = new Date(data.expires_at).getTime() - Date.now();
+        const expiresAt = new Date(data.expires_at + "T23:59:59Z");
+        const diff = expiresAt.getTime() - Date.now();
         const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        if (days <= 30) setDaysLeft(days);
+        if (days <= 30 && days >= 0) setDaysLeft(days);
       });
   }, []);
 

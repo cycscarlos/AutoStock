@@ -6,9 +6,9 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 const SECRET = process.env.LICENSE_SECRET || "dev_license_secret_insecure";
 
 function generateKey(expiresAt: Date) {
-  const yy = String(expiresAt.getFullYear()).slice(2);
-  const mm = String(expiresAt.getMonth() + 1).padStart(2, "0");
-  const dd = String(expiresAt.getDate()).padStart(2, "0");
+  const yy = String(expiresAt.getUTCFullYear()).slice(2);
+  const mm = String(expiresAt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(expiresAt.getUTCDate()).padStart(2, "0");
   const rawDate = yy + mm + dd;
 
   const hmac = createHmac("sha256", SECRET)
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Fechas de activación y expiración requeridas" }, { status: 400 });
     }
 
-    const expiresDate = new Date(expires_at + "T00:00:00");
+    const expiresDate = new Date(expires_at + "T00:00:00Z");
     if (isNaN(expiresDate.getTime())) {
       return NextResponse.json({ error: "Fecha de expiración inválida" }, { status: 400 });
     }

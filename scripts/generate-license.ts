@@ -25,9 +25,9 @@ const env = loadEnv();
 const SECRET = env.LICENSE_SECRET || process.env.LICENSE_SECRET || "dev_license_secret_insecure";
 
 function generateKey(expiresAt: Date) {
-  const yy = String(expiresAt.getFullYear()).slice(2);
-  const mm = String(expiresAt.getMonth() + 1).padStart(2, "0");
-  const dd = String(expiresAt.getDate()).padStart(2, "0");
+  const yy = String(expiresAt.getUTCFullYear()).slice(2);
+  const mm = String(expiresAt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(expiresAt.getUTCDate()).padStart(2, "0");
   const rawDate = yy + mm + dd;
 
   const hmac = createHmac("sha256", SECRET)
@@ -53,7 +53,7 @@ function parseCli() {
 
   if (args.includes("--test")) {
     const thirtyDays = new Date();
-    thirtyDays.setDate(thirtyDays.getDate() + 30);
+    thirtyDays.setUTCDate(thirtyDays.getUTCDate() + 30);
     return generateKey(thirtyDays);
   }
 
@@ -64,7 +64,7 @@ function parseCli() {
     process.exit(1);
   }
 
-  const expiresAt = new Date(args[expiresIdx + 1] + "T00:00:00");
+  const expiresAt = new Date(args[expiresIdx + 1] + "T00:00:00Z");
   if (isNaN(expiresAt.getTime())) {
     console.error("ERROR: Fecha inválida. Use formato YYYY-MM-DD");
     process.exit(1);

@@ -43,11 +43,11 @@ export async function proxy(request: NextRequest) {
           return NextResponse.redirect(dest);
         }
 
-        const expiresAt = new Date(licencias[0].expires_at);
+        const expiresAt = new Date(licencias[0].expires_at + "T23:59:59Z");
         const now = new Date();
         const daysLeft = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-        if (daysLeft <= 0) {
+        if (daysLeft < 0) {
           return NextResponse.redirect(new URL("/license?expired=1", request.url));
         }
       } catch (err) {
